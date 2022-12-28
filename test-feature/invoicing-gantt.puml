@@ -1,0 +1,89 @@
+@startwbs
+'* Business Process Modelling WBS
+'** Launch the project
+'*** Complete Stakeholder Research
+'*** Initial Implementation Plan
+'** Design phase
+'*** Model of AsIs Processes Completed
+'**** Model of AsIs Processes Completed1
+'**** Model of AsIs Processes Completed2
+'*** Measure AsIs performance metrics
+'*** Identify Quick Wins
+'** Complete innovate phase
+
+* New Service
+'[Repo Cloning] lasts 1 day
+'[Code Cleanup] lasts 1 day
+'[Go version change] lasts 1 day
+'[Dependency Resolution] lasts 1 day
+'[Health Check] lasts 1 day
+'[DB] lasts 1 day
+'[DAL] lasts 1 day
+'[DB Schema Creation (Aniket)] lasts 1 day
+'[Migration File] lasts 1 day
+'[DB Integration] lasts 1 day
+'[Connection Pooling] lasts 1 day
+'[DB Setup by Devops (EXT)] lasts 1 day
+'[Staging] lasts 1 day
+'[Prod] lasts 1 day
+'[New Service Setup by Devops (EXT)] lasts 1 day
+'[Argo Workflow pre-prod (staging) setup by Devops (EXT)] lasts 1 day
+'[Dataflow setup by Devops (EXT)] lasts 1 day
+'[Dataflow build job setup] lasts 1 day
+'[Dataflow Integration] lasts 1 day
+'[Staging] lasts 1 day
+'[Vault] lasts 1 day
+'[Cluster Base] lasts 1 day
+'[Migration Job] lasts 1 day
+'[Seed Data] lasts 1 day
+'[Redis Pod creation] lasts 1 day
+'[Prod] lasts 1 day
+'[Redis Pod creation] lasts 1 day
+'[Spinnaker Pipeline] lasts 1 day
+'[Build & Deploy Job] lasts 1 day
+'[Revert Job] lasts 1 day
+'[Vault] lasts 1 day
+'[Secret Manager] lasts 1 day
+'[Migration Job] lasts 1 day
+'[Enable Query Insights] lasts 1 day
+'[Redash/Biquery Access Setup] lasts 1 day
+'[New Relic Integration] lasts 1 day
+'[Alerting] lasts 1 day
+'[Swagger Integration (Akshat - 3D)] lasts 1 day
+'[Redis Integration (Aniket - 2D)] lasts 1 day
+'[Config Manager Integration] lasts 1 day
+'[Lock Manager Integration] lasts 1 day
+'[Idempotency Manager Integration] lasts 1 day
+'[Transaction Manager Integration] lasts 1 day
+'[Circuit Breaker Integration] lasts 1 day
+'[JSON Schema Validator (Akshat - 3D)] lasts 1 day
+'
+'[Modules] lasts 1 day
+'[Invoicing] lasts 1 day
+'[REST Service] lasts 1 day
+'[Workflow] lasts 1 day
+'[Argo Workflow Orchestrator] lasts 1 day
+'[Argo Workflow Tasks] lasts 1 day
+'[Dataflow Orchestrator] lasts 1 day
+'[Reporting] lasts 1 day
+'[REST Service] lasts 1 day
+'[Workflow] lasts 1 day
+'[Workflow Orchestrator] lasts 1 day
+'[Workflow Tasks] lasts 1 day
+'[Adjustment] lasts 1 day
+'[REST Service] lasts 1 day
+'[Workflow] lasts 1 day
+'[Workflow Orchestrator] lasts 1 day
+'[Workflow Tasks] lasts 1 day
+'
+'[Workflow Tasks module] lasts 2 day
+'[Argo Workflow pre-prod (staging) setup] lasts 2 day
+'[REST Service build and deployment Jenkins Job] lasts 2 day
+'[Wo] lasts 2 day
+'[Prototype design] lasts 15 days
+'[Test prototype] lasts 10 days
+
+'Project starts 2020-07-01
+'[Prototype design] starts 2020-07-01
+'[Test prototype] starts 2020-07-16
+@endwbs

@@ -1,0 +1,41 @@
+@startuml
+
+mainframe sd: Example for order creation
+
+actor User
+
+box Frontend #lightgreen
+participant App
+end box
+
+box Orchestration #lightblue
+participant espresso
+database espressoDB
+end box
+
+box Allocation #lightblue
+participant allocation
+database allocDB
+end box
+
+User -> App: Place Order
+activate App #pink
+App -> espresso: /create-order
+activate espresso #pink
+espresso -> espressoDB: Insert order \nwith init state
+activate espresso #darksalmon
+activate espressoDB #pink
+espressoDB --> espresso: Inserted
+deactivate espresso
+deactivate espressoDB
+espresso -> espresso: Check validations
+alt #lightyellow Validations succeeded
+espresso --> App: Success\n(order created)
+App --> User: Order created
+else Validations failed
+espresso --> App: Failed\n(order not created)
+deactivate espresso
+App --> User: Request failed, retry
+deactivate App
+end
+@enduml

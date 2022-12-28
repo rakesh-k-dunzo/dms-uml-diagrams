@@ -1,0 +1,136 @@
+@startwbs
+'https://plantuml.com/mindmap-diagram
+
+title DMS Reporting Service
+
+* DMS Reporting Service
+** New Service Setup & POC (5W)
+*** Repo Cloning
+**** Code Cleanup
+**** Go version change
+**** Dependency Resolution
+*** Health Check
+*** New Relic Integration
+**** Alerting
+*** Swagger Integration (3D)
+*** Config Manager Integration
+*** JSON Schema Validator (3D)
+*** GCS Setup
+*** Workflow Set up (3W)
+**** Argo WF pre-prod (staging) setup by Devops (EXT)
+**** Dataflow setup by Devops in staging (EXT)
+**** Argo Workflow
+***** Argo WF Build job
+***** Argo Workflow POC & Integration
+****** Dataflow orchestration
+******* Dataflow invoke
+******* Dataflow status polling
+******* Dataflow resilience (retry, resume)
+**** Dataflow
+***** Dataflow build job & Integration
+***** Dataflow POC
+****** BigQuery read
+****** PostGres write
+****** PubSub push
+
+*** DB (0.5W)
+**** Migration File
+**** DB Integration
+***** Connection Pooling
+**** DB Setup by Devops [EXT]
+***** Staging
+***** Prod
+
+*** New Service Setup by Devops [EXT] (0.5W)
+**** Staging
+***** Vault
+****** Cluster Base
+***** Migration Job
+***** Seed Data
+**** Prod
+***** Spinnaker Pipeline
+****** Build & Deploy Job
+****** Revert Job
+***** Vault
+***** Secret Manager
+***** Migration Job
+***** Enable Query Insights
+***** Redash/Biquery Access Setup
+
+** Modules
+
+*** data-collection (5W)
+**** Repo (1D)
+**** DAL
+**** DB Schema Creation
+**** Scheduler (hourly)
+**** Workflow
+***** Argo
+****** Argo Workflow Orchestration YAML
+****** Argo Workflow Tasks Scripts
+***** Dataflow
+****** Dataflow Orchestration YAML
+****** Dataflow functions
+
+*** Reporting (3W)
+**** Controller (1D)
+**** Service (2D)
+**** Repo (1D)
+**** DAL
+**** DB Schema Creation
+**** Workflow
+**** Argo
+***** Argo Workflow Orchestration YAML
+***** Argo Workflow Tasks Scripts
+****** Data Read
+****** CSV Generation
+****** GCS Put
+****** Email
+
+*** Invoicing (3W)
+**** Espresso RBAC
+**** Controller (1D)
+***** Get Invoice API
+**** Service (2D)
+**** Repo (1D)
+**** DAL
+**** DB Schema Creation
+**** Scheduler (monthly)
+**** Workflow
+**** Argo
+***** Argo Workflow Orchestration YAML
+***** Argo Workflow Tasks Scripts
+****** PDF Generation
+
+*** Adjustment (4W)
+**** Espresso RBAC
+**** Controller (1D)
+***** Get Invoice API
+**** Service (2D)
+**** Repo (1D)
+**** DAL
+**** DB Schema Creation
+**** Workflow
+***** Argo
+***** Argo Workflow Orchestration YAML
+***** Argo Workflow Tasks Scripts
+****** CSV Read
+****** Refund API Int.
+
+** Data Migration (2W)
+*** Tasks data backfilling
+
+** Documentation
+** Automation [EXT]
+** CDC Pipeline (0.5W)
+*** Devops CDC Pipeline Tickets [EXT]
+*** DE Dataflow Setup Tickets [EXT]
+*** Prod Testing
+*** Decryption
+
+header
+
+Task Breakdown
+endheader
+
+@endwbs
