@@ -15,6 +15,12 @@ title DMS Reporting Service
 *** Swagger Integration (3D)
 *** Config Manager Integration
 *** JSON Schema Validator (3D)
+*** Gihub Actions
+**** Code coverage
+**** linter/static analysis
+**** git secrets check
+**** sql linter
+*** PG Bouncer Setup
 *** GCS Setup
 *** Workflow Set up (3W)
 **** Argo WF pre-prod (staging) setup by Devops (EXT)
