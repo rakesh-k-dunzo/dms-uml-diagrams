@@ -1,0 +1,10 @@
+@startuml
+[*] --> BATCHED: Auto Allocation\n(Normal orders)
+[*] --> ALLOCATION_HELD: Manual Assignment\n(LCV Orders)
+BATCHED --> RESCHEDULED: Reschedule
+RESCHEDULED --> BATCHED
+ALLOCATION_HELD --> BATCH_ASSIGNED: Manual Assignment
+BATCHED --> BATCH_IN_ALLOCATION: Picked by cron
+BATCH_IN_ALLOCATION --> BATCH_ASSIGNED: Auto allocated
+BATCH_ASSIGNED --> [*]
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+mainframe sd: Task Creation
+
+box "Frontend"
+participant PartnerApp
+box end
+
+box "1N Backend"
+participant FO
+participant MTS
+participant UTS
+box end
+
+box "DMS Supply"
+participant RTS
+box end
+
+box "DMS Demand"
+participant DevApi
+box end
+
+MTS -> DevApi: /orch/tasks
+DevApi -> UTS: Create user task
+UTS --> DevApi: Created
+DevApi --> MTS: task_id
+
+@enduml

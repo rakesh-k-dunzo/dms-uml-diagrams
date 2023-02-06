@@ -1,0 +1,49 @@
+@startuml
+title Apache Beam Architecture
+
+package "Data Sources" {
+  [Read from BigQuery]
+  [Read from PubSub]
+  [Read from Avro]
+  [Read from Text]
+  [Read from Apache Kafka]
+  [Read from Google Cloud Storage]
+}
+
+package "Data Transformation" {
+  [Map]
+  [Filter]
+  [FlatMap]
+  [Combine]
+  [GroupByKey]
+  [Window]
+}
+
+package "Data Sinks" {
+  [Write to BigQuery]
+  [Write to PubSub]
+  [Write to Avro]
+  [Write to Text]
+  [Write to Apache Kafka]
+  [Write to Google Cloud Storage]
+}
+
+package "Apache Beam SDKs" {
+  [Java]
+  [Python]
+  [Go]
+  [C++]
+}
+
+package "Apache Beam Runners" {
+  [Google Cloud Dataflow]
+  [Apache Flink]
+  [Apache Spark]
+  [Google Cloud Dataproc]
+}
+
+[Data Sources] -down-> [Data Transformation]
+[Data Transformation] -down-> [Data Sinks]
+[Apache Beam SDKs] -down-> [Apache Beam Runners]
+
+@enduml

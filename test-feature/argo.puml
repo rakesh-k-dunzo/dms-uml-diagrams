@@ -1,0 +1,719 @@
+@startjson
+{
+  "namespace": "argo-wf",
+  "serverDryRun": false,
+  "workflow": {
+    "metadata": {
+      "generateName": "{generate-name}",
+      "namespace": "argo-wf"
+    },
+    "spec": {
+      "onExit": "exit-handler",
+      "volumeClaimGC": {
+        "strategy": "OnWorkflowCompletion"
+      },
+      "entrypoint": "main",
+      "volumes": [
+        {
+          "name": "sa-vol",
+          "secret": {
+            "secretName": "serviceaccountsecret"
+          }
+        }
+      ],
+      "arguments": {
+        "parameters": [
+          {
+            "name": "request-id",
+            "value": "{request-id}"
+          },
+          {
+            "name": "error-message",
+            "value": "some error occured"
+          },
+          {
+            "name": "vault-host",
+            "value": "http://vault-gcp.dunzo.in"
+          },
+          {
+            "name": "service-name",
+            "value": "procurement-service"
+          },
+          {
+            "name": "nr-appname",
+            "value": "prod-procurement-service"
+          },
+          {
+            "name": "nr-license",
+            "value": "85bded9530484bd96cfbe58674f2b83dc5249022"
+          },
+          {
+            "name": "vault-service-name",
+            "value": "procurement-service"
+          },
+          {
+            "name": "google-app-cred",
+            "value": "/var/secrets/google/serviceAccountSecret"
+          },
+          {
+            "name": "drive-folder-id",
+            "value": "1GCx1h-0yhiyxV1wKRwXJw1GZUP-UX074"
+          }
+        ]
+      },
+      "volumeClaimTemplates": [
+        {
+          "metadata": {
+            "name": "sheetdir"
+          },
+          "spec": {
+            "storageClassName": "zonal-storage",
+            "accessModes": [
+              "ReadWriteOnce"
+            ],
+            "resources": {
+              "requests": {
+                "storage": "1Gi"
+              }
+            }
+          }
+        }
+      ],
+      "templates": [
+        {
+          "name": "main",
+          "steps": [
+            [
+              {
+                "name": "bulk-ingestion-initializer",
+                "template": "bulk-ingestion-initializer"
+              }
+            ],
+            [
+              {
+                "name": "bulk-ingestion-sheet-validator",
+                "template": "bulk-ingestion-sheet-validator"
+              }
+            ],
+            [
+              {
+                "name": "bulk-ingestion-ingester",
+                "template": "bulk-ingestion-ingester"
+              }
+            ]
+          ]
+        },
+        {
+          "name": "bulk-ingestion-initializer",
+          "retryStrategy": {
+            "limit": "3",
+            "expression": "asInt(lastRetry.exitCode) == 1",
+            "backoff": {
+              "duration": "5s",
+              "factor": 2,
+              "maxDuration": "85s"
+            }
+          },
+          "container": {
+            "image": "asia.gcr.io/prod-application/dunzo/procurement:bulk_ingestion_initializer-latest",
+            "imagePullPolicy": "Always",
+            "command": [
+              "./main"
+            ],
+            "args": [
+              "-request-id={{workflow.parameters.request-id}}",
+              "-workflow-id={{workflow.name}}"
+            ],
+            "resources": {
+              "requests": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              },
+              "limits": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              }
+            },
+            "env": [
+              {
+                "name": "VAULT_HOST",
+                "value": "{{workflow.parameters.vault-host}}"
+              },
+              {
+                "name": "VAULT_TOKEN",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "procurement-vault-token",
+                    "key": "vaultTokenSecret"
+                  }
+                }
+              },
+              {
+                "name": "SERVICE_NAME",
+                "value": "{{workflow.parameters.service-name}}"
+              },
+              {
+                "name": "NR_APPNAME",
+                "value": "{{workflow.parameters.nr-appname}}"
+              },
+              {
+                "name": "NEWRELICLICENSE",
+                "value": "{{workflow.parameters.nr-license}}"
+              },
+              {
+                "name": "VAULT_SERVICE_NAME",
+                "value": "{{workflow.parameters.vault-service-name}}"
+              },
+              {
+                "name": "GOOGLE_APPLICATION_CREDENTIALS",
+                "value": "{{workflow.parameters.google-app-cred}}"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "sa-vol",
+                "mountPath": "/var/secrets/google"
+              }
+            ]
+          },
+          "outputs": {
+            "parameters": [
+              {
+                "name": "error-message",
+                "valueFrom": {
+                  "default": "",
+                  "path": "/tmp/error-message.txt"
+                },
+                "globalName": "error-message"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bulk-ingestion-sheet-validator",
+          "retryStrategy": {
+            "limit": "3",
+            "expression": "asInt(lastRetry.exitCode) == 1",
+            "backoff": {
+              "duration": "5s",
+              "factor": 2,
+              "maxDuration": "85s"
+            }
+          },
+          "container": {
+            "image": "asia.gcr.io/prod-application/dunzo/procurement:bulk_ingestion_sheet_validator-latest",
+            "imagePullPolicy": "Always",
+            "command": [
+              "./main"
+            ],
+            "args": [
+              "-request-id={{workflow.parameters.request-id}}",
+              "-workflow-id={{workflow.name}}"
+            ],
+            "resources": {
+              "requests": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              },
+              "limits": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              }
+            },
+            "env": [
+              {
+                "name": "VAULT_HOST",
+                "value": "{{workflow.parameters.vault-host}}"
+              },
+              {
+                "name": "VAULT_TOKEN",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "procurement-vault-token",
+                    "key": "vaultTokenSecret"
+                  }
+                }
+              },
+              {
+                "name": "SERVICE_NAME",
+                "value": "{{workflow.parameters.service-name}}"
+              },
+              {
+                "name": "NR_APPNAME",
+                "value": "{{workflow.parameters.nr-appname}}"
+              },
+              {
+                "name": "NEWRELICLICENSE",
+                "value": "{{workflow.parameters.nr-license}}"
+              },
+              {
+                "name": "VAULT_SERVICE_NAME",
+                "value": "{{workflow.parameters.vault-service-name}}"
+              },
+              {
+                "name": "GOOGLE_APPLICATION_CREDENTIALS",
+                "value": "{{workflow.parameters.google-app-cred}}"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "sheetdir",
+                "mountPath": "/mnt/vol"
+              },
+              {
+                "name": "sa-vol",
+                "mountPath": "/var/secrets/google"
+              }
+            ]
+          },
+          "outputs": {
+            "parameters": [
+              {
+                "name": "error-message",
+                "valueFrom": {
+                  "default": "",
+                  "path": "/tmp/error-message.txt"
+                },
+                "globalName": "error-message"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bulk-ingestion-ingester",
+          "retryStrategy": {
+            "limit": "3",
+            "expression": "asInt(lastRetry.exitCode) == 1",
+            "backoff": {
+              "duration": "5s",
+              "factor": 2,
+              "maxDuration": "85s"
+            }
+          },
+          "container": {
+            "image": "asia.gcr.io/prod-application/dunzo/procurement:bulk_ingestion_ingester-latest",
+            "imagePullPolicy": "Always",
+            "command": [
+              "./main"
+            ],
+            "args": [
+              "-request-id={{workflow.parameters.request-id}}",
+              "-workflow-id={{workflow.name}}"
+            ],
+            "resources": {
+              "requests": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              },
+              "limits": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              }
+            },
+            "env": [
+              {
+                "name": "VAULT_HOST",
+                "value": "{{workflow.parameters.vault-host}}"
+              },
+              {
+                "name": "VAULT_TOKEN",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "procurement-vault-token",
+                    "key": "vaultTokenSecret"
+                  }
+                }
+              },
+              {
+                "name": "SERVICE_NAME",
+                "value": "{{workflow.parameters.service-name}}"
+              },
+              {
+                "name": "NR_APPNAME",
+                "value": "{{workflow.parameters.nr-appname}}"
+              },
+              {
+                "name": "NEWRELICLICENSE",
+                "value": "{{workflow.parameters.nr-license}}"
+              },
+              {
+                "name": "VAULT_SERVICE_NAME",
+                "value": "{{workflow.parameters.vault-service-name}}"
+              },
+              {
+                "name": "GOOGLE_APPLICATION_CREDENTIALS",
+                "value": "{{workflow.parameters.google-app-cred}}"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "sa-vol",
+                "mountPath": "/var/secrets/google"
+              }
+            ]
+          },
+          "outputs": {
+            "parameters": [
+              {
+                "name": "error-message",
+                "valueFrom": {
+                  "default": "",
+                  "path": "/tmp/error-message.txt"
+                },
+                "globalName": "error-message"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bulk-ingestion-sheet-generator",
+          "retryStrategy": {
+            "limit": "3",
+            "expression": "asInt(lastRetry.exitCode) == 1",
+            "backoff": {
+              "duration": "5s",
+              "factor": 2,
+              "maxDuration": "85s"
+            }
+          },
+          "inputs": {
+            "parameters": [
+              {
+                "name": "error-message",
+                "value": "{{workflow.outputs.parameters.error-message}}"
+              }
+            ]
+          },
+          "container": {
+            "image": "asia.gcr.io/prod-application/dunzo/procurement:bulk_ingestion_sheet_generator-latest",
+            "imagePullPolicy": "Always",
+            "command": [
+              "./main"
+            ],
+            "args": [
+              "-request-id={{workflow.parameters.request-id}}",
+              "-workflow-id={{workflow.name}}",
+              "-error-message={{inputs.parameters.error-message}}"
+            ],
+            "resources": {
+              "requests": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              },
+              "limits": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              }
+            },
+            "env": [
+              {
+                "name": "VAULT_HOST",
+                "value": "{{workflow.parameters.vault-host}}"
+              },
+              {
+                "name": "VAULT_TOKEN",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "procurement-vault-token",
+                    "key": "vaultTokenSecret"
+                  }
+                }
+              },
+              {
+                "name": "SERVICE_NAME",
+                "value": "{{workflow.parameters.service-name}}"
+              },
+              {
+                "name": "NR_APPNAME",
+                "value": "{{workflow.parameters.nr-appname}}"
+              },
+              {
+                "name": "NEWRELICLICENSE",
+                "value": "{{workflow.parameters.nr-license}}"
+              },
+              {
+                "name": "VAULT_SERVICE_NAME",
+                "value": "{{workflow.parameters.vault-service-name}}"
+              },
+              {
+                "name": "GOOGLE_APPLICATION_CREDENTIALS",
+                "value": "{{workflow.parameters.google-app-cred}}"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "sheetdir",
+                "mountPath": "/mnt/vol"
+              },
+              {
+                "name": "sa-vol",
+                "mountPath": "/var/secrets/google"
+              }
+            ]
+          },
+          "outputs": {
+            "parameters": [
+              {
+                "name": "success-entity-count",
+                "valueFrom": {
+                  "default": "0",
+                  "path": "/tmp/success-entity-count.txt"
+                }
+              },
+              {
+                "name": "failed-entity-count",
+                "valueFrom": {
+                  "default": "0",
+                  "path": "/tmp/failed-entity-count.txt"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "bulk-ingestion-sheet-uploader",
+          "retryStrategy": {
+            "limit": "3",
+            "expression": "asInt(lastRetry.exitCode) == 1",
+            "backoff": {
+              "duration": "5s",
+              "factor": 2,
+              "maxDuration": "85s"
+            }
+          },
+          "container": {
+            "image": "asia.gcr.io/prod-application/dunzo/procurement:bulk_ingestion_sheet_uploader-latest",
+            "imagePullPolicy": "Always",
+            "command": [
+              "./main"
+            ],
+            "args": [
+              "-request-id={{workflow.parameters.request-id}}",
+              "-workflow-id={{workflow.name}}"
+            ],
+            "resources": {
+              "requests": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              },
+              "limits": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              }
+            },
+            "env": [
+              {
+                "name": "VAULT_HOST",
+                "value": "{{workflow.parameters.vault-host}}"
+              },
+              {
+                "name": "VAULT_TOKEN",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "procurement-vault-token",
+                    "key": "vaultTokenSecret"
+                  }
+                }
+              },
+              {
+                "name": "SERVICE_NAME",
+                "value": "{{workflow.parameters.service-name}}"
+              },
+              {
+                "name": "NR_APPNAME",
+                "value": "{{workflow.parameters.nr-appname}}"
+              },
+              {
+                "name": "NEWRELICLICENSE",
+                "value": "{{workflow.parameters.nr-license}}"
+              },
+              {
+                "name": "VAULT_SERVICE_NAME",
+                "value": "{{workflow.parameters.vault-service-name}}"
+              },
+              {
+                "name": "GOOGLE_APPLICATION_CREDENTIALS",
+                "value": "{{workflow.parameters.google-app-cred}}"
+              },
+              {
+                "name": "DRIVE_FOLDER_ID",
+                "value": "{{workflow.parameters.drive-folder-id}}"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "sheetdir",
+                "mountPath": "/mnt/vol"
+              },
+              {
+                "name": "sa-vol",
+                "mountPath": "/var/secrets/google"
+              }
+            ]
+          },
+          "outputs": {
+            "parameters": [
+              {
+                "name": "success-sheet-url",
+                "valueFrom": {
+                  "default": "",
+                  "path": "/tmp/success-sheet-url.txt"
+                }
+              },
+              {
+                "name": "failed-sheet-url",
+                "valueFrom": {
+                  "default": "",
+                  "path": "/tmp/failed-sheet-url.txt"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "bulk-ingestion-completer",
+          "retryStrategy": {
+            "limit": "3",
+            "expression": "asInt(lastRetry.exitCode) == 1",
+            "backoff": {
+              "duration": "5s",
+              "factor": 2,
+              "maxDuration": "85s"
+            }
+          },
+          "inputs": {
+            "parameters": [
+              {
+                "name": "success-entity-count"
+              },
+              {
+                "name": "failed-entity-count"
+              },
+              {
+                "name": "success-sheet-url"
+              },
+              {
+                "name": "failed-sheet-url"
+              }
+            ]
+          },
+          "container": {
+            "image": "asia.gcr.io/prod-application/dunzo/procurement:bulk_ingestion_completer-latest",
+            "imagePullPolicy": "Always",
+            "command": [
+              "./main"
+            ],
+            "args": [
+              "-request-id={{workflow.parameters.request-id}}",
+              "-success-sheet-url={{inputs.parameters.success-sheet-url}}",
+              "-failed-sheet-url={{inputs.parameters.failed-sheet-url}}",
+              "-success-entity-count={{inputs.parameters.success-entity-count}}",
+              "-failed-entity-count={{inputs.parameters.failed-entity-count}}"
+            ],
+            "resources": {
+              "requests": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              },
+              "limits": {
+                "memory": "3Gi",
+                "cpu": "150m"
+              }
+            },
+            "env": [
+              {
+                "name": "VAULT_HOST",
+                "value": "{{workflow.parameters.vault-host}}"
+              },
+              {
+                "name": "VAULT_TOKEN",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "procurement-vault-token",
+                    "key": "vaultTokenSecret"
+                  }
+                }
+              },
+              {
+                "name": "SERVICE_NAME",
+                "value": "{{workflow.parameters.service-name}}"
+              },
+              {
+                "name": "NR_APPNAME",
+                "value": "{{workflow.parameters.nr-appname}}"
+              },
+              {
+                "name": "NEWRELICLICENSE",
+                "value": "{{workflow.parameters.nr-license}}"
+              },
+              {
+                "name": "VAULT_SERVICE_NAME",
+                "value": "{{workflow.parameters.vault-service-name}}"
+              },
+              {
+                "name": "GOOGLE_APPLICATION_CREDENTIALS",
+                "value": "{{workflow.parameters.google-app-cred}}"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "sa-vol",
+                "mountPath": "/var/secrets/google"
+              }
+            ]
+          }
+        },
+        {
+          "name": "exit-handler",
+          "steps": [
+            [
+              {
+                "name": "bulk-ingestion-sheet-generator",
+                "template": "bulk-ingestion-sheet-generator",
+                "continueOn": {
+                  "failed": true
+                }
+              }
+            ],
+            [
+              {
+                "name": "bulk-ingestion-sheet-uploader",
+                "template": "bulk-ingestion-sheet-uploader",
+                "continueOn": {
+                  "failed": true
+                }
+              }
+            ],
+            [
+              {
+                "name": "bulk-ingestion-completer",
+                "template": "bulk-ingestion-completer",
+                "arguments": {
+                  "parameters": [
+                    {
+                      "name": "success-entity-count",
+                      "value": "{{steps.bulk-ingestion-sheet-generator.outputs.parameters.success-entity-count}}"
+                    },
+                    {
+                      "name": "failed-entity-count",
+                      "value": "{{steps.bulk-ingestion-sheet-generator.outputs.parameters.failed-entity-count}}"
+                    },
+                    {
+                      "name": "success-sheet-url",
+                      "value": "{{steps.bulk-ingestion-sheet-uploader.outputs.parameters.success-sheet-url}}"
+                    },
+                    {
+                      "name": "failed-sheet-url",
+                      "value": "{{steps.bulk-ingestion-sheet-uploader.outputs.parameters.failed-sheet-url}}"
+                    }
+                  ]
+                }
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}
+@endjson

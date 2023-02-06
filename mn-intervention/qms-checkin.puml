@@ -1,0 +1,35 @@
+@startuml
+mainframe sd: QMS Check-in
+
+box "Frontend"
+participant PartnerApp
+box end
+
+box "DMS Supply"
+participant RTS
+box end
+
+box "1N Backend"
+participant QMS
+box end
+
+group Approach 1
+PartnerApp -> RTS: /check-in
+RTS -> QMS: /check-in
+QMS --> RTS: Success
+RTS -> RTS: update task instr.\n(qms checked-in)
+QMS ->>(2) RTS: Update partner queue number
+RTS --> PartnerApp: Pusher event
+
+loop
+PartnerApp -> RTS: /task-sync-api
+RTS --> PartnerApp: Queue number, State
+alt not (Order scanned and Re-queues exhausted)
+PartnerApp -> PartnerApp: Continue
+else Eligible for pickup
+PartnerApp -> PartnerApp: Break
+end
+end
+end
+
+@enduml
