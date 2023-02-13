@@ -53,8 +53,8 @@ activate UTS
 activate RTS
 RTS -> RTS: Update task instr. \n& user task instr.
 alt batched order
-RTS ->
-else single order
+RTS -> RTS: Task instr. state\n = batch checking\nin progress
+else single order or last order of batch
 RTS -> RTS: Mark partner PURCHASED
 end
 RTS --> UTS: Success
