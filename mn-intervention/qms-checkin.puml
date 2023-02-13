@@ -11,25 +11,75 @@ box end
 
 box "1N Backend"
 participant QMS
+participant MTS
 box end
 
-group Approach 1
-PartnerApp -> RTS: /check-in
-RTS -> QMS: /check-in
-QMS --> RTS: Success
-RTS -> RTS: update task instr.\n(qms checked-in)
-QMS ->>(2) RTS: Update partner queue number
-RTS --> PartnerApp: Pusher event
+' Checkout error cases in QMS check-in
+' Queue number update Qms <-> App
+' Stale batch handler
 
-loop
-PartnerApp -> RTS: /task-sync-api
-RTS --> PartnerApp: Queue number, State
-alt not (Order scanned and Re-queues exhausted)
-PartnerApp -> PartnerApp: Continue
-else Eligible for pickup
-PartnerApp -> PartnerApp: Break
+autonumber 1.1
+
+
+
+group Check-in
+PartnerApp -> PartnerApp: Scan QMS QR
+activate PartnerApp
+
+PartnerApp -> RTS: Reached to store
+activate RTS
+RTS -> RTS: Check reusable-bag\nflag in task
+alt reusable_bags_enabled
+
+RTS -> QMS: Reached to store
+activate RTS
+activate QMS
+QMS -> MTS: GET partner bags count
+activate QMS
+activate MTS
+MTS --> QMS: partner-bags count
+deactivate MTS
+deactivate QMS
+QMS --> RTS: Bags count, token (5min exp.)
+deactivate QMS
+deactivate RTS
+alt Bag count > 0
+RTS --> PartnerApp: Forward
+deactivate RTS
+note left
+Reusable bag
+return flow via
+RTS as proxy
+end note
+else
 end
+
+else
 end
+
+PartnerApp -> RTS: /check-in
+activate RTS
+RTS -> RTS: update task instr. (RFP)
+activate RTS
+deactivate RTS
+RTS -> QMS: /check-in
+activate RTS
+activate QMS
+RTS <-- QMS: QMS screen data
+deactivate QMS
+RTS -> RTS: Store QMS data
+deactivate RTS
+RTS ->> PartnerApp: Pusher event
+note left
+RTS Task sync flow
+in separate thread,
+see step 4.1
+end note
+RTS --> PartnerApp: Success
+
+deactivate RTS
+deactivate PartnerApp
 end
+
 
 @enduml

@@ -1,0 +1,75 @@
+@startuml
+mainframe sd: Queue Updates
+
+box "Frontend"
+participant PartnerApp
+box end
+
+box "DMS Supply"
+participant RTS
+box end
+
+box "1N Backend"
+participant QMS
+participant MTS
+participant Espresso
+box end
+
+' Checkout error cases in QMS check-in
+' Queue number update Qms <-> App
+' Stale batch handler
+
+autonumber 1.1
+
+group Queue updates in PartnerApp
+
+QMS -> QMS: Queue updates
+activate QMS
+QMS ->> Espresso: Update QMS TS in\nmain sync API
+alt QMS Pusher event
+QMS ->> PartnerApp: Pusher event: queue number
+deactivate QMS
+else Main Sync Polling
+activate PartnerApp
+PartnerApp -> Espresso: Main sync API polling
+activate PartnerApp
+activate Espresso
+Espresso --> PartnerApp: Timestamps
+deactivate Espresso
+deactivate PartnerApp
+note left
+Ignore Main sync
+QMS updates while
+on RTS task sync api
+end note
+end
+
+autonumber 4.1
+group Task Sync Flow
+loop until Order scanned OR Re-queues exhausted
+PartnerApp -> RTS: /task-sync-api
+activate RTS
+activate PartnerApp
+RTS -> QMS: Get QMS data
+note right
+Call in sync for
+strong consistency
+end note
+activate RTS
+activate QMS
+QMS --> RTS: QMS Data
+deactivate RTS
+deactivate QMS
+RTS -> RTS: Enrich QMS data\nwith Task data
+RTS --> PartnerApp: Screen type, data\n(QMS + task data)
+
+deactivate PartnerApp
+deactivate RTS
+end
+end
+
+' Design goals
+' Not sync
+'
+
+@enduml

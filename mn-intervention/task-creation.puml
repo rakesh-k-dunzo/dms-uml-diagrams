@@ -1,14 +1,8 @@
 @startuml
 mainframe sd: Task Creation
 
-box "Frontend"
-participant PartnerApp
-box end
-
 box "1N Backend"
-participant FO
-participant MTS
-participant UTS
+participant FS
 box end
 
 box "DMS Supply"
@@ -17,11 +11,29 @@ box end
 
 box "DMS Demand"
 participant DevApi
+participant UTS
+participant Espresso
 box end
 
-MTS -> DevApi: /orch/tasks
-DevApi -> UTS: Create user task
+FS -> DevApi: /orch/tasks (create)\nreusable-bag enabled\nflag,store-config
+activate FS
+activate DevApi
+DevApi -> UTS: Create MN user task,\nreusable-bag flag
+activate UTS
 UTS --> DevApi: Created
-DevApi --> MTS: task_id
+deactivate UTS
+DevApi ->> Espresso: queue_tasks_allocation_async
+Espresso ->> RTS: Create runner task (via allocation flow)
+activate RTS
+RTS -> RTS: create_runner_task(),\nreusable-bag flag
+deactivate RTS
+note right
+Creates runner task in
+RTS as per existing flow
+via allocation
+end note
+DevApi --> FS: task_id
+deactivate DevApi
+deactivate FS
 
 @enduml

@@ -1,0 +1,39 @@
+@startuml
+mainframe sd: QMS Check-in
+
+box "Frontend"
+participant PartnerApp
+box end
+
+box "DMS Supply"
+participant RTS
+box end
+
+box "1N Backend"
+participant QMS
+participant Espresso
+box end
+
+' Checkout error cases in QMS check-in
+' Queue number update Qms <-> App
+' Stale batch handler
+
+PartnerApp -> Espresso: /main-sync-api
+PartnerApp <-- Espresso: Resp
+
+
+
+PartnerApp -> RTS: /task-sync-api
+PartnerApp <-- RTS: Resp
+
+
+PartnerApp -> Espresso: /main-sync-api
+PartnerApp <-- Espresso: Resp
+
+|||
+|||
+
+PartnerApp -> QMS: /facility-state
+PartnerApp <-- QMS: Resp
+
+@enduml

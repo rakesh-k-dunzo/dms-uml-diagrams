@@ -1,0 +1,98 @@
+@startuml
+mainframe sd: Scan Order
+
+box "Frontend"
+participant PartnerApp
+box end
+
+'box "API Gateway"
+'participant ScanToAssignDAG
+'box end
+
+box "1N Backend"
+participant FS
+participant QMS
+participant MTS
+box end
+
+box "DMS Demand"
+participant DevApi
+participant UTS
+box end
+
+
+box "DMS Supply"
+participant RTS
+box end
+
+
+
+PartnerApp -> PartnerApp: Scan order
+activate PartnerApp
+
+' Remove RTS.
+' Avoid RTS push to app on batch order scan
+' Subsequent scans should go to RTS from app
+' (via API gateway)
+' What happens to DevAPI data
+' if batch scan expires.
+'
+
+PartnerApp -> FS: /scan-to-assign
+alt First order of the batch
+activate PartnerApp
+activate FS
+FS -> DevApi: /update-task
+activate FS
+activate DevApi
+DevApi -> UTS: /update-user-task
+activate UTS
+activate DevApi
+UTS -> RTS: Update runner task
+activate UTS
+activate RTS
+RTS -> RTS: Update task instr. \n& user task instr.
+alt batched order
+RTS ->
+else single order
+RTS -> RTS: Mark partner PURCHASED
+end
+RTS --> UTS: Success
+deactivate UTS
+DevApi <-- UTS: success
+deactivate UTS
+deactivate DevApi
+DevApi -> DevApi: Update order details\nSPSD to SPMD if appl.
+
+DevApi --> FS: Success
+deactivate DevApi
+deactivate FS
+deactivate RTS
+deactivate FS
+else last order of batch
+FS -> MTS: Complete\nmerchant task
+activate FS
+activate MTS
+MTS --> FS: Success
+deactivate FS
+deactivate MTS
+FS -> QMS: /checkout-partner
+activate FS
+activate QMS
+FS <-- QMS: Success
+deactivate FS
+deactivate QMS
+
+end
+
+
+RTS --> PartnerApp: 200 OK
+deactivate RTS
+deactivate PartnerApp
+deactivate PartnerApp
+
+PartnerApp -> RTS: /task-sync-api
+
+
+
+@enduml

@@ -1,0 +1,4 @@
+@startjson
+{ "input_node": { "name": "ScanToAssignRequest" }, "intermediate_nodes": [ { "request_node": { "name": "BatchedRTSScanToAssign", "mapping_node_name": "BatchedRTSScanToAssignMapperNode", "mapper_function_name": "batched_rts_scan_assign_request_mapper", "dependencies": [ "ScanToAssignRequest" ] }, "response_node": { "name": "BatchedRTSScanToAssignResponse", "service_node_name": "BatchedRTSScanToAssignResponseNode" } } ], "output_node": { "name": "BatchedScanToAssignResponse", "mapping_node_name": "BatchedScanToAssignResponseMapperNode", "mapper_function_name": "batched_scan_to_assign_response_mapper", "dependencies": [ "BatchedRTSScanToAssignResponse" ] }, "exception_node": { "name": "ScanToAssignExceptionResponse", "mapping_node_name": "ScanToAssignExceptionMapperNode", "mapper_function_name": "scan_to_assign_recovery_mapper" }, "timeout": 30 }
+
+@endjson
