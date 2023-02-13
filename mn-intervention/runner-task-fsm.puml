@@ -1,0 +1,14 @@
+@startuml
+[*] --> ASSIGNED: Assign task to runner
+ASSIGNED --> ACCEPTED: Runner accepts task
+ACCEPTED --> RFP: QMS Scanned
+RFP --> QMS_DEQUEUED: Runner is dequeued
+QMS_DEQUEUED --> BATCH_PICKUP_IN_PROGRESS: Batched order
+QMS_DEQUEUED --> SFD: Single order
+BATCH_PICKUP_IN_PROGRESS --> SFD: All orders scanned
+BATCH_PICKUP_IN_PROGRESS --> QMS_DEQUEUED: Requeued \n(due to issue)
+SFD -> RFD: Reached for delivery
+RFD -up-> DELIVERED: Order delivered
+DELIVERED -up-> RATED: Task is rated
+RATED -up-> [*]
+@enduml

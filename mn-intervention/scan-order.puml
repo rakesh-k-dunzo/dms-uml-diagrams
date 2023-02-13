@@ -1,6 +1,8 @@
 @startuml
 mainframe sd: Scan Order
 
+actor Partner
+
 box "Frontend"
 participant PartnerApp
 box end
@@ -10,6 +12,7 @@ box end
 'box end
 
 box "1N Backend"
+participant DAG
 participant FS
 participant QMS
 participant MTS
@@ -27,7 +30,7 @@ box end
 
 
 
-PartnerApp -> PartnerApp: Scan order
+Partner -> PartnerApp: Scan order
 activate PartnerApp
 
 ' Remove RTS.
@@ -38,61 +41,122 @@ activate PartnerApp
 ' if batch scan expires.
 '
 
-PartnerApp -> FS: /scan-to-assign
-alt First order of the batch
+PartnerApp -> DAG: /scan-to-assign
+activate DAG
 activate PartnerApp
+alt batch_id empty (first order of the batch)
+DAG -> FS: /scan-to-assign
+activate DAG
 activate FS
 FS -> DevApi: /update-task
 activate FS
 activate DevApi
-DevApi -> UTS: /update-user-task
+DevApi -> UTS: /update-\nuser-task
 activate UTS
 activate DevApi
-UTS -> RTS: Update runner task
+UTS -> RTS: Update runner\ntask
 activate UTS
 activate RTS
 RTS -> RTS: Update task instr. \n& user task instr.
 alt batched order
-RTS -> RTS: Task instr. state\n = batch checking\nin progress
+RTS -> RTS: Runner task state\n = batch checking\nin progress
 else single order or last order of batch
-RTS -> RTS: Mark partner PURCHASED
+RTS -> RTS: Mark runner task \nPURCHASED
 end
 RTS --> UTS: Success
 deactivate UTS
 DevApi <-- UTS: success
 deactivate UTS
 deactivate DevApi
-DevApi -> DevApi: Update order details\nSPSD to SPMD if appl.
+DevApi -> DevApi: Update order
+activate DevApi
+deactivate DevApi
 
 DevApi --> FS: Success
 deactivate DevApi
 deactivate FS
 deactivate RTS
+FS ->> Espresso: Task sync TS update
+activate Espresso
+Espresso ->> PartnerApp: Pusher event for\ntask-sync-api
+deactivate Espresso
+FS --> DAG: Success
 deactivate FS
-else last order of batch
-FS -> MTS: Complete\nmerchant task
-activate FS
-activate MTS
-MTS --> FS: Success
-deactivate FS
-deactivate MTS
-FS -> QMS: /checkout-partner
-activate FS
-activate QMS
-FS <-- QMS: Success
-deactivate FS
-deactivate QMS
+deactivate DAG
+DAG --> PartnerApp: Success
+deactivate DAG
+deactivate PartnerApp
+deactivate PartnerApp
+else Subsequent order of the batch
+Partner -> PartnerApp: Scan order
+activate PartnerApp
+PartnerApp -> DAG: /scan-to-assign
+activate PartnerApp
+activate DAG
+DAG -> RTS: /batch_pickup
+activate DAG
+activate RTS
+RTS -> RTS: Update user task instr.
+activate RTS
+deactivate RTS
+RTS ->> PartnerApp: Pusher event
+RTS --> DAG: Success
+deactivate RTS
+deactivate DAG
+DAG --> PartnerApp: Success
+deactivate PartnerApp
+deactivate PartnerApp
+deactivate DAG
+alt Last active order of the batch
+activate RTS
 
+RTS -> Espresso: Pre-compute payout
+activate RTS
+activate Espresso
+Espresso --> RTS: Task Payout data
+deactivate RTS
+deactivate Espresso
+RTS -> RTS: Mark runner task SFD
+activate RTS
+deactivate RTS
+RTS -> MTS: Complete\nmerchant task
+activate RTS
+activate MTS
+MTS --> RTS: Success
+deactivate RTS
+deactivate MTS
+RTS -> QMS: /checkout\n-partner
+activate RTS
+activate QMS
+RTS <-- QMS: Success
+deactivate RTS
+deactivate QMS
+RTS -> PartnerApp: Pusher event
+RTS --> DAG: Success
+deactivate RTS
+DAG --> PartnerApp: Success
+deactivate PartnerApp
+end
 end
 
-
-RTS --> PartnerApp: 200 OK
+deactivate FS
 deactivate RTS
-deactivate PartnerApp
-deactivate PartnerApp
-
+loop Poll /task-sync-api
 PartnerApp -> RTS: /task-sync-api
+activate PartnerApp
+activate RTS
+RTS -> Espresso: GET Task Payout
+activate RTS
+activate Espresso
+Espresso --> RTS: Task payout data
+deactivate Espresso
+deactivate RTS
+RTS -> PartnerApp: Screen type, data
+deactivate RTS
 
+PartnerApp -> PartnerApp: Display
+deactivate PartnerApp
+end
 
 
 @enduml
